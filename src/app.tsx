@@ -21,8 +21,8 @@ export function App() {
         <NewNoteCard />
 
         {
-          Array.from({ length: 10 }, () => 1).map(_ => (
-            <NoteCard />
+          Array.from({ length: 10 }, () => 1).map(item => (
+            <NoteCard key={`Teste ${Math.random()}`} date={new Date()} content={`Teste ${item}`}/>
           ))
         }
       </div>
