@@ -3,6 +3,10 @@ import { X } from 'lucide-react';
 import { ChangeEvent, useState } from 'react';
 import { toast } from 'sonner';
 
+interface ExtendedPermissions extends Permissions {
+  request: (permissionDesc: PermissionDescriptor) => Promise<PermissionStatus>;
+}
+
 interface NewNoteCardProps {
   onNoteCreated: (content: string) => void;
 }
@@ -36,7 +40,27 @@ export function NewNoteCard({ onNoteCreated }: NewNoteCardProps) {
     onNoteCreated(content);
   }
 
-  function handleStartRecording() {
+  async function hasPermissionAudio() {
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+
+      if (permissionStatus.state === 'granted') return true;
+
+      if (permissionStatus.state === 'prompt') {
+        const extendedPermissions = navigator.permissions as ExtendedPermissions;
+        const newPermissionStatus = await extendedPermissions.request({ name: 'microphone' as PermissionName });
+
+        return newPermissionStatus.state === 'granted';
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Erro ao solicitar permissão para acessar o microfone:', error);
+      return false;
+    }
+  }
+
+  async function handleStartRecording() {
     const isSpeechRecognitionAPIAvailable = 'SpeechRecognition' in window
       || 'webkitSpeechRecognition' in window;
 
@@ -70,6 +94,14 @@ export function NewNoteCard({ onNoteCreated }: NewNoteCardProps) {
     }
 
     speechRecognition.start();
+
+    if (!await hasPermissionAudio()) {
+      speechRecognition.stop();
+      setIsRecording(value => !value);
+      setShouldShowOnboarding(value => !value);
+      alert('Ative a permissão para acesso ao microfone do seu dispositivo.');
+      return;
+    }
   }
 
   function handleStopRecording() {
@@ -107,7 +139,7 @@ export function NewNoteCard({ onNoteCreated }: NewNoteCardProps) {
                 </p>
               ) : (
                 <textarea
-                  autoFocus
+
                   value={content}
                   onChange={handleContentChange}
                   className='text-sm leading-6 text-slate-400 bg-transparent resize-none flex-1 outline-none'
