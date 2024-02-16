@@ -2,6 +2,7 @@ import { ChangeEvent, useState } from 'react';
 import logo from './assets/logo-nlw-expert.svg';
 import { NewNoteCard } from './components/new-note-card';
 import { NoteCard } from './components/note-card';
+import { generateUIID } from './utils/security/generate-uuid';
 
 interface Note {
   id: string;
@@ -26,7 +27,7 @@ export function App() {
 
   function onNoteCreated(content: string) {
     const newNote = {
-      id: crypto.randomUUID(),
+      id: generateUIID(),
       date: new Date(),
       content
     };
@@ -36,8 +37,6 @@ export function App() {
     setNotes(newNotes);
 
     localStorage.setItem('notes', JSON.stringify(newNotes));
-
-    console.log(newNotes);
   }
 
   function onNoteDeleted(id: string) {
